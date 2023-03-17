@@ -62,7 +62,11 @@ class Sampler:
         
         
     def __adasyn__(self, k_neig = 2):
-        self.fSampler = ADASYN(sampling_strategy= self.strg, n_neighbors=k_neig)
+        try:
+            self.fSampler = ADASYN(sampling_strategy= self.strg, n_neighbors=k_neig)
+        except:
+            self.fSampler = SMOTE(sampling_strategy=self.strg,k_neighbors = k_neig)
+                
         
         
         
