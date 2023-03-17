@@ -8,16 +8,24 @@ from sklearn.decomposition import PCA
 from tslearn.svm import TimeSeriesSVC
 from tslearn.preprocessing import TimeSeriesScalerMinMax
 import seaborn as sns
+from pyts.classification import TimeSeriesForest
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.over_sampling import SMOTE
 from imblearn.over_sampling import ADASYN
 from imblearn.metrics import geometric_mean_score
 from sklearn.metrics import matthews_corrcoef
-
+from imbalanced_degree import ID
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
+from sklearn.metrics import (precision_recall_curve, PrecisionRecallDisplay)
+from sklearn.preprocessing import label_binarize
+from sklearn.metrics import average_precision_score
+from sklearn.preprocessing import label_binarize
+from sklearn.neural_network import MLPClassifier
+from tslearn.neural_network import TimeSeriesMLPClassifier
 import tsaug
+import itertools
 
 
 class Sampler:
@@ -107,10 +115,27 @@ class Sampler:
             return x, y
         
         elif(self.sampler == 'SMOTE'):
-            return SMOTE(k_neighbors=2, sampling_strategy=self.strg).fit_resample(x,y)
+            return SMOTE(k_neighbors=np.min([np.min(y_dist) - 1,2]), sampling_strategy=self.strg).fit_resample(x,y)
         
         elif(self.sampler == 'ADASYN'):
             return ADASYN(n_neighbors=2, sampling_strategy=self.strg).fit_resample(x,y)
+    def __getRealSyntData__(self,y):
+        
+        _, y_dist = np.unique(y, return_counts=True)
+        res = [False for i in range(len(y))]
+         
+        missing_to_add = list()
+         
+        for i in range(len(y_dist)):
+            missing_to_add.append(self.strg[i] - y_dist[i])
+        print(missing_to_add)
+        
+        for i in range(np.sum(missing_to_add) ):
+
+            res.append(True)
+        
+        return res
+        
             
             
             
@@ -124,6 +149,11 @@ class Classif:
         if (clf == 'SVM'):
             
             self.clf = TimeSeriesSVC(kernel="gak", gamma=.1, n_jobs=-1)
+        elif (clf == 'TSF'):
+            
+            self.clf = TimeSeriesForest(n_jobs = -1,max_features='sqrt')
+        elif (clf == 'MLP'):
+            self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(64,64), verbose = True)
             
               
         
@@ -153,11 +183,42 @@ class Classif:
             y_test (list): test labels
 
         Returns:
-            int : accuracy
+            float : accuracy
         """
         
         
         return accuracy_score(y_test, self.clf.predict(x_test))
+    
+    def getPreRec(self, x_test, y_test, AP = False, plot = False):
+        """Return precision (by class) of fitted model on test data
+
+        Args:
+            x_test (list): test data
+            y_test (list): test labels
+
+        Returns:
+            precision (list) : Precision
+            recall (list) : Recall
+            
+        """
+        n_classes = len(set(y_test))
+        if (n_classes > 2):
+            precision = dict()
+            recall = dict()
+            average_precision = dict()
+            for i in range(n_classes):
+                precision[i], recall[i], _ = precision_recall_curve(label_binarize(y_test,classes=[*range(n_classes)])[:, i],
+                                                                    label_binarize(self.clf.predict(x_test),classes=[*range(n_classes)])[:, i])
+                average_precision[i] = average_precision_score(label_binarize(y_test,classes=[*range(n_classes)])[:, i],
+                                                            label_binarize(self.clf.predict(x_test),classes=[*range(n_classes)])[:, i])
+                
+        else:
+            precision, recall, _ = precision_recall_curve(label_binarize(y_test,classes=[*range(n_classes)]),
+                                                                    label_binarize(self.clf.predict(x_test),classes=[*range(n_classes)]))
+            
+        
+        
+        return precision, recall
     
     def getMcc(self, x_test, y_test):
         """Return accuracy of fitted model on test data
@@ -167,7 +228,7 @@ class Classif:
             y_test (list): test labels
 
         Returns:
-            int : accuracy
+            int : mcc
         """
         
         
@@ -182,7 +243,7 @@ class Classif:
             average (Boolean): Return mean of g score of each class
 
         Returns:
-            int : accuracy
+            int : f1 score
         """
         if average:
             return geometric_mean_score(y_test, self.clf.predict(x_test),average='macro')
@@ -200,7 +261,7 @@ class Classif:
             average (Boolean): Return mean of g score of each class
 
         Returns:
-            int : accuracy
+            int : G score
         """
         if average:
             return f1_score(y_test, self.clf.predict(x_test),average='macro')
@@ -503,3 +564,29 @@ def class_modifier_multi(dataset):
     if dataset == "Wafer":
         return 0.5 #152
     return 1
+
+
+def getAllDist(n_max, k, nb_data):
+    """ Get all distribution possible with k classes, nb data with n_max max data in each class
+
+    Args:
+        n_max (int): Max nb of data in each class
+        k (int): Nb classes
+        nb_data (int): Nb of data
+
+    Returns:
+        array : All distribution possible with k classes, nb data with n_max data in each class (0 is not allowed)
+        
+    """
+    
+    
+    
+    combi = np.array([p for p in itertools.combinations_with_replacement(range(1,n_max+1), k)]) # All possible combinaison (cartesian product)
+    
+    res = list()
+    for c in combi:
+        
+        if(c.sum() == nb_data and np.min(c) > 1): # check is the sum of each combinaison is equal to the nb of data we want and let at least 2 data per class
+            res.append(c)
+    
+    return np.array(res)# Since we consider symmetrical distribution equivalent, we remove repetition (e.g. [1,2] and [2,1] are equivalent)
