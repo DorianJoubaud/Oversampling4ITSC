@@ -6,7 +6,7 @@ from sklearn.manifold import TSNE
 
 from sklearn.decomposition import PCA
 from tslearn.svm import TimeSeriesSVC
-from tslearn.preprocessing import TimeSeriesScalerMinMax
+
 import seaborn as sns
 from pyts.classification import TimeSeriesForest
 from imblearn.under_sampling import RandomUnderSampler
@@ -122,7 +122,10 @@ class Sampler:
             return SMOTE(k_neighbors=np.min([np.min(y_dist) - 1,2]), sampling_strategy=self.strg).fit_resample(x,y)
         
         elif(self.sampler == 'ADASYN'):
-            return ADASYN(n_neighbors=2, sampling_strategy=self.strg).fit_resample(x,y)
+            try:
+                return ADASYN(n_neighbors=2, sampling_strategy=self.strg).fit_resample(x,y)
+            except:
+                return SMOTE(k_neighbors=np.min([np.min(y_dist) - 1,2]), sampling_strategy=self.strg).fit_resample(x,y)
     def __getRealSyntData__(self,y):
         
         _, y_dist = np.unique(y, return_counts=True)
@@ -290,6 +293,8 @@ class Classif:
             return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = 'macro'),geometric_mean_score(y_test, y_pred, average='macro')
         
         return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = None),geometric_mean_score(y_test, y_pred, average = None)
+    
+    def get
         
         
 
