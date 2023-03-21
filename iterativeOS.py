@@ -294,7 +294,7 @@ class Classif:
         
         return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = None),geometric_mean_score(y_test, y_pred, average = None)
     
-    def get
+    
         
         
 
