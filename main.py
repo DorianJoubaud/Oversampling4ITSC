@@ -53,9 +53,11 @@ nb = dist.sum()
 
 dist_id = list()
 
+combi = np.array([p for p in itertools.combinations_with_replacement(range(1,dist[0]+1), len(dist))]) # All possible combinaison (cartesian product)
+
 for i in range(nb):
     
-    all_dist = getAllDist(dist[0],len(dist),nb-i)
+    all_dist = getAllDist(nb-i, combi)
     
     for dist_i in all_dist:
         

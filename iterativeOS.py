@@ -575,7 +575,7 @@ def class_modifier_multi(dataset):
     return 1
 
 
-def getAllDist(n_max, k, nb_data):
+def getAllDist(nb_data, combi):
     """ Get all distribution possible with k classes, nb data with n_max max data in each class
 
     Args:
@@ -590,7 +590,7 @@ def getAllDist(n_max, k, nb_data):
     
     
     
-    combi = np.array([p for p in itertools.combinations_with_replacement(range(1,n_max+1), k)]) # All possible combinaison (cartesian product)
+
     
     res = list()
     for c in combi:
