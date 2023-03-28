@@ -27,6 +27,13 @@ from tslearn.neural_network import TimeSeriesMLPClassifier
 import tsaug
 import itertools
 
+from keras.layers import Conv1D, BatchNormalization, GlobalAveragePooling1D, Permute, Dropout, Flatten
+from keras.layers import Input, Dense, LSTM, CuDNNLSTM, concatenate, Activation, GRU, SimpleRNN
+from keras.models import Model
+from keras.optimizers import Adam
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler
+import wandb
+from wandb.keras import WandbCallback
 
 class Sampler:
     def __init__(self, sampler, strg):
@@ -162,15 +169,70 @@ class Classif:
         elif (clf == 'MLP'):
             self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(64,64), verbose = True)
             
-              
+        elif (clf == 'LSTM'):
+            self.clf = 'LSTM'
+            
+            
+    def __lstm__(self,MAX_SEQUENCE_LENGTH, NB_CLASS, NUM_CELLS=8):
+       
+
+            ip = Input(shape=(MAX_SEQUENCE_LENGTH,1))
+
+            x = LSTM(NUM_CELLS)(ip)
+            x = Dropout(0.8)(x)
+
+            y = Permute((2, 1))(ip)
+            y = Conv1D(128, 8, padding='same', kernel_initializer='he_uniform')(y)
+            y = BatchNormalization()(y)
+            y = Activation('relu')(y)
+
+            y = Conv1D(256, 5, padding='same', kernel_initializer='he_uniform')(y)
+            y = BatchNormalization()(y)
+            y = Activation('relu')(y)
+
+            y = Conv1D(128, 3, padding='same', kernel_initializer='he_uniform')(y)
+            y = BatchNormalization()(y)
+            y = Activation('relu')(y)
+
+            y = GlobalAveragePooling1D()(y)
+
+            x = concatenate([x, y])
+
+            out = Dense(NB_CLASS, activation='softmax')(x)
+
+            model = Model(ip, out)
+
+            model.summary()
+
+            # add load model code here to fine-tune
+
+            return model
         
-    def fit(self, x_train, y_train):
+    def fit(self, x_train, y_train,x_test=None, y_test = None, name = None, add_name = None, out = None):
         """
         Fit the model on training data
         
         """
         
-        self.clf.fit(x_train, y_train)
+        if self.clf == 'LSTM':
+            self.clf = self.__lstm__(len(x_train[0]), len(y_train[0]))
+            model_checkpoint = ModelCheckpoint(f'{out}__weights.h5', verbose=0,
+                                       monitor='loss', save_best_only=True, save_weights_only=True)
+            reduce_lr = ReduceLROnPlateau(monitor='loss', patience=100, mode='auto',
+                                  factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
+            print('=== Compiled ===')
+
+            # wandb.login(key="89972c25af0c49a4e2e1b8663778daedd960634a")
+            # wandb.init(project="iterative_imbalance_classification_TS", entity="djbd")
+            # wandb.run.name = f'Classification {name}  - {add_name}'
+
+            callback_list = [model_checkpoint, reduce_lr]#,WandbCallback()]
+            optm = Adam(lr=1e-3)
+            self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy'])
+            hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=50, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
+            np.save(f'{out}/hist.npy', hist.history)
+        else:
+            self.clf.fit(x_train, y_train)
         
     
     def predict(self,x_test):
@@ -287,8 +349,9 @@ class Classif:
         Returns:
             list: all metric (accu, mcc, f1, g)
         """
-        y_pred = self.clf.predict(x_test)
-        
+        y_pred = np.argmax(self.clf.predict(x_test), axis=1)
+        y_test = np.argmax(y_test , axis = 1)
+        print(y_test, y_pred)
         if average:
             return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = 'macro'),geometric_mean_score(y_test, y_pred, average='macro')
         
