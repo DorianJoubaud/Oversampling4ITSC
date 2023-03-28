@@ -216,7 +216,7 @@ class Classif:
         
         if self.clf == 'LSTM':
             self.clf = self.__lstm__(len(x_train[0]), len(y_train[0]))
-            model_checkpoint = ModelCheckpoint(f'{out}__weights.h5', verbose=0,
+            model_checkpoint = ModelCheckpoint(f'{out}__weights.hdf5', verbose=0,
                                        monitor='loss', save_best_only=True, save_weights_only=True)
             reduce_lr = ReduceLROnPlateau(monitor='loss', patience=100, mode='auto',
                                   factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
