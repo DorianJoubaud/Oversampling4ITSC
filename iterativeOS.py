@@ -352,8 +352,11 @@ class Classif:
         Returns:
             list: all metric (accu, mcc, f1, g)
         """
-        y_pred = np.argmax(self.clf.predict(x_test), axis=1)
-        y_test = np.argmax(y_test , axis = 1)
+        y_pred = self.clf.predict(x_test)
+        if (len(np.array(y_pred).shape) > 1):
+            y_pred = np.argmax(y_pred, axis=1)
+            y_test = np.argmax(y_test , axis = 1)
+       
         
         if average:
             return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = 'macro'),geometric_mean_score(y_test, y_pred, average='macro')
