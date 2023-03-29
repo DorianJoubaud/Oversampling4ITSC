@@ -171,8 +171,8 @@ class Classif:
             
         elif (clf == 'LSTM'):
             self.clf = 'LSTM'
-            
-            
+
+        
     def __lstm__(self,MAX_SEQUENCE_LENGTH, NB_CLASS, NUM_CELLS=8):
        
 
@@ -207,8 +207,11 @@ class Classif:
             # add load model code here to fine-tune
 
             return model
+    # RESNET
+
         
-    def fit(self, x_train, y_train,x_test=None, y_test = None, name = None, add_name = None, out = None):
+    
+    def fit(self, x_train, y_train,x_test=None, y_test = None, name = None, add_name = None, out = None,iters = None):
         """
         Fit the model on training data
         
@@ -216,7 +219,7 @@ class Classif:
         
         if self.clf == 'LSTM':
             self.clf = self.__lstm__(len(x_train[0]), len(y_train[0]))
-            model_checkpoint = ModelCheckpoint(f'{out}__weights.hdf5', verbose=0,
+            model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.hdf5', verbose=0,
                                        monitor='loss', save_best_only=True, save_weights_only=True)
             reduce_lr = ReduceLROnPlateau(monitor='loss', patience=100, mode='auto',
                                   factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
@@ -229,8 +232,8 @@ class Classif:
             callback_list = [model_checkpoint, reduce_lr]#,WandbCallback()]
             optm = Adam(lr=1e-3)
             self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy'])
-            hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=50, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
-            np.save(f'{out}/hist.npy', hist.history)
+            hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
+            np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         else:
             self.clf.fit(x_train, y_train)
         
@@ -351,7 +354,7 @@ class Classif:
         """
         y_pred = np.argmax(self.clf.predict(x_test), axis=1)
         y_test = np.argmax(y_test , axis = 1)
-        print(y_test, y_pred)
+        
         if average:
             return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = 'macro'),geometric_mean_score(y_test, y_pred, average='macro')
         

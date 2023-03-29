@@ -11,7 +11,7 @@ tech = sys.argv[3]
 
 
 trig = False
-nb_iter = 10
+nb_iter = 5
 
 
 # ======= Input data =======
@@ -22,6 +22,11 @@ x_test = np.array(pd.read_csv(f'data/{dataset}/{dataset}_TEST.tsv', delimiter='\
 out = f'results/{dataset}/{clfs}_{tech}'
 if not os.path.exists(out):
     os.makedirs(out)
+    
+if not os.path.exists(out+'B_history'):
+    os.makedirs(out+'B_history')
+    os.makedirs(out+'I_history')
+    
 
 np.savetxt(out+'/'+'accI.txt', [0 for i in range(nb_iter)])
 np.savetxt(out+'/'+'mccI.txt',[0 for i in range(nb_iter)])
@@ -58,7 +63,6 @@ bal_str = {i:dist[i] for i in range(len(dist))}
 
 y_train = tf.keras.utils.to_categorical(y_train, num_classes=None, dtype="float32")
 y_test = tf.keras.utils.to_categorical(y_test, num_classes=None, dtype="float32")
-print(y_train)
 
 
 # ======= Create all distribution from balance to imbalance =======
@@ -122,8 +126,13 @@ for i in range(len(dist_id)):
         y = tf.keras.utils.to_categorical(y, num_classes=None, dtype="float32")
 
         # ====print(x.shape)=== Classif on imbalanced data =======
+        
+        
+        if not os.path.exists(out+'I_history'+f'/I_{i}'):
+            os.makedirs(out+'I_history'+f'/I_{i}')
+            
         clf = Classif(clfs)
-        clf.fit(x,y,x_test, y_test, dataset, f'Imbal - {i}',out = out) 
+        clf.fit(x,y,x_test, y_test, dataset, f'I_{i}',out = out+'I_history', iters=ite) 
         
         a, m, f, g = clf.getPerf(x_test, y_test, average = True)
         
@@ -140,7 +149,9 @@ for i in range(len(dist_id)):
         y_os = tf.keras.utils.to_categorical(y_os, num_classes=None, dtype="float32")
         
         # ======= Classif on balanced data with synthetic data =======
-        clf.fit(x_os, y_os, x_test, y_test, dataset, f'Bal - {i}', out=out) 
+        if not os.path.exists(out+'B_history'+f'/B_{i}'):
+            os.makedirs(out+'B_history'+f'/B_{i}')
+        clf.fit(x_os, y_os, x_test, y_test, dataset, f'B_{i}', out=out+'B_history',iters = ite) 
         
         
         a, m, f, g = clf.getPerf(x_test, y_test, average = True)
