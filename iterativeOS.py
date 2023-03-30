@@ -31,7 +31,7 @@ from keras.layers import Conv1D, BatchNormalization, GlobalAveragePooling1D, Per
 from keras.layers import Input, Dense, LSTM, CuDNNLSTM, concatenate, Activation, GRU, SimpleRNN
 from keras.models import Model
 from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, EarlyStopping
 import wandb
 from wandb.keras import WandbCallback
 
@@ -167,10 +167,13 @@ class Classif:
             
             self.clf = TimeSeriesForest(n_jobs = -1,max_features='sqrt')
         elif (clf == 'MLP'):
-            self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(64,64), verbose = True)
+            self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(500,500,), verbose = True)
             
         elif (clf == 'LSTM'):
             self.clf = 'LSTM'
+            
+        elif (clf == 'MLP4'):
+            self.clf = 'MLP4'
 
         
     def __lstm__(self,MAX_SEQUENCE_LENGTH, NB_CLASS, NUM_CELLS=8):
@@ -207,7 +210,28 @@ class Classif:
             # add load model code here to fine-tune
 
             return model
-    # RESNET
+    def mlp4(self,input_shape, nb_class):
+    # Z. Wang, W. Yan, T. Oates, "Time Series Classification from Scratch with Deep Neural Networks: A Strong Baseline," Int. Joint Conf. Neural Networks, 2017, pp. 1578-1585
+    
+        ip = Input(shape=input_shape)
+        fc = Flatten()(ip)
+        
+        fc = Dropout(0.1)(fc)
+                
+        fc = Dense(500, activation='relu')(fc)
+        fc = Dropout(0.2)(fc)
+        
+        fc = Dense(500, activation='relu')(fc)
+        fc = Dropout(0.2)(fc)
+        
+        fc = Dense(500, activation='relu')(fc)
+        fc = Dropout(0.3)(fc)
+        
+        out = Dense(nb_class, activation='softmax')(fc)
+        
+        model = Model([ip], [out])
+        model.summary()
+        return model
 
         
     
@@ -216,24 +240,29 @@ class Classif:
         Fit the model on training data
         
         """
-        
-        if self.clf == 'LSTM':
-            self.clf = self.__lstm__(len(x_train[0]), len(y_train[0]))
-            model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.hdf5', verbose=0,
-                                       monitor='loss', save_best_only=True, save_weights_only=True)
-            reduce_lr = ReduceLROnPlateau(monitor='loss', patience=100, mode='auto',
-                                  factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
-            print('=== Compiled ===')
+        if self.clf == 'LSTM' or self.clf == 'MLP4':
+            
+            if self.clf == 'LSTM':
+                self.clf = self.__lstm__(len(x_train[0]), len(y_train[0]))
+            elif self.clf == 'MLP4':
+                self.clf = self.mlp4((len(x_train[0]),1), len(y_train[0]))
+                
+                model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.hdf5', verbose=0,
+                                        monitor='loss', save_best_only=True, save_weights_only=True)
+                reduce_lr = ReduceLROnPlateau(monitor='loss', patience=100, mode='auto',
+                                    factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
+                early_stop = EarlyStopping(monitor='val_loss', patience=100)
+                print('=== Compiled ===')
 
-            # wandb.login(key="89972c25af0c49a4e2e1b8663778daedd960634a")
-            # wandb.init(project="iterative_imbalance_classification_TS", entity="djbd")
-            # wandb.run.name = f'Classification {name}  - {add_name}'
+                # wandb.login(key="89972c25af0c49a4e2e1b8663778daedd960634a")
+                # wandb.init(project="iterative_imbalance_classification_TS", entity="djbd")
+                # wandb.run.name = f'Classification {name}  - {add_name}'
 
-            callback_list = [model_checkpoint, reduce_lr]#,WandbCallback()]
-            optm = Adam(lr=1e-3)
-            self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy'])
-            hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
-            np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
+                callback_list = [model_checkpoint, reduce_lr, early_stop]#,WandbCallback()]
+                optm = Adam(lr=1e-3)
+                self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy'])
+                hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
+                np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         else:
             self.clf.fit(x_train, y_train)
         
