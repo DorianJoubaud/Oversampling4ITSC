@@ -31,6 +31,7 @@ from keras.layers import Conv1D, BatchNormalization, GlobalAveragePooling1D, Per
 from keras.layers import Input, Dense, LSTM, CuDNNLSTM, concatenate, Activation, GRU, SimpleRNN
 from keras.models import Model
 from keras.optimizers import Adam
+import tensorflow_addons as tfa
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, EarlyStopping
 import wandb
 from wandb.keras import WandbCallback
@@ -249,9 +250,9 @@ class Classif:
                 
                 model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.hdf5', verbose=0,
                                         monitor='loss', save_best_only=True, save_weights_only=True)
-                reduce_lr = ReduceLROnPlateau(monitor='loss', patience=100, mode='auto',
+                reduce_lr = ReduceLROnPlateau(monitor='loss', patience=150, mode='auto',
                                     factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
-                early_stop = EarlyStopping(monitor='val_loss', patience=100)
+                early_stop = EarlyStopping(monitor='val_loss', patience=300)
                 print('=== Compiled ===')
 
                 # wandb.login(key="89972c25af0c49a4e2e1b8663778daedd960634a")
@@ -260,7 +261,7 @@ class Classif:
 
                 callback_list = [model_checkpoint, reduce_lr, early_stop]#,WandbCallback()]
                 optm = Adam(lr=1e-3)
-                self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy'])
+                self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy',tfa.metrics.F1Score(num_classes=len(y_train[0]))])
                 hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
                 np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         else:
@@ -697,3 +698,29 @@ def getAllDist(nb_data, combi):
             res.append(c)
     
     return np.array(res)# Since we consider symmetrical distribution equivalent, we remove repetition (e.g. [1,2] and [2,1] are equivalent)
+
+
+# def getAlldistMulti(nb_data, combi, m_class):
+#     res = list()
+#     for c in combi:
+#         if(c.sum() == nb_data and np.min(c) > 1):
+#             for j in range(len(m_class)-1):
+#                 if c[m_class[j]] == c[m_class[j+1]]:
+#                     res.append(c)
+#                 else:
+#                     break
+#     return res
+
+def getAlldistMulti(k,n_max,M_class, m_class):
+    restot = list()
+    for i in range(n_max-2):
+        res=np.zeros(k)
+        for M in M_class:
+            res[M] = int(n_max)
+        for m in m_class:
+            res[m] = int(n_max-i)
+        restot.append(res)
+    return restot
+
+
+
