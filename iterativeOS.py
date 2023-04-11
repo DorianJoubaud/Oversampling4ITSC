@@ -248,7 +248,7 @@ class Classif:
             elif self.clf == 'MLP4':
                 self.clf = self.mlp4((len(x_train[0]),1), len(y_train[0]))
                 
-                model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.hdf5', verbose=0,
+                model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.ckpt', verbose=0,
                                         monitor='loss', save_best_only=True, save_weights_only=True)
                 reduce_lr = ReduceLROnPlateau(monitor='loss', patience=150, mode='auto',
                                     factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
