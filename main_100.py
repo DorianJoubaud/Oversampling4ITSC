@@ -26,7 +26,7 @@ x_train = np.array(pd.read_csv(f'data/{dataset}/{dataset}_TRAIN.tsv', delimiter=
 x_test = np.array(pd.read_csv(f'data/{dataset}/{dataset}_TEST.tsv', delimiter='\t',header=None))
 
 # ======= Creating folders for results ======= 
-out = f'results/{dataset}/{clfs}_{tech}'
+out = f'results/{dataset}/{sys.argv[4]}_{sys.argv[5]}/{clfs}_{tech}'
 if not os.path.exists(out):
     os.makedirs(out)
 
