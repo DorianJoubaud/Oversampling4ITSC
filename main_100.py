@@ -18,7 +18,7 @@ for x in sys.argv[4]:
 for x in sys.argv[5]:
     mi.append(int(x))
 trig = False
-nb_iter = 5x
+nb_iter = 5
 
 
 # ======= Input data =======
