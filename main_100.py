@@ -67,7 +67,7 @@ y_test = tf.keras.utils.to_categorical(y_test, num_classes=None, dtype="float32"
 # ======= Create all distribution from balance to imbalance =======
 
 nb = dist.sum() 
-print(y_train)
+
 dist_id = list()
 all_dist = np.array(getAlldistMulti(len(dist),np.max(dist),Ma, mi)).astype(int)
 dist_id = list()   
@@ -81,14 +81,16 @@ dist_id.sort(key=lambda x: x[1])
 
 id_trunk = list()
 dist_trunk = list()
-print(dist_id)
-for i in np.linspace(0,len(dist_id)-1,pourcentage):
-    idx = int(i*(len(dist_id)/pourcentage))
+
+for i in np.linspace(0,99,pourcentage):
+    
+    idx = int(i*(len(dist_id)/100))
+    
     
     
     id_trunk.append(dist_id[idx][1])
     dist_trunk.append(dist_id[idx][0])
-
+print(dist_trunk)
 pd.DataFrame(list(zip(dist_trunk, id_trunk))).to_csv(out+'/'+'id.txt')
 
 
