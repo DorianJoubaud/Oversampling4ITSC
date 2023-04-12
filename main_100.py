@@ -135,8 +135,8 @@ for i in range(len(dist_trunk)):
         # ====print(x.shape)=== Classif on imbalanced data =======
         
         
-        if not os.path.exists(out+'I_history'+f'/I_{i}'):
-            os.makedirs(out+'I_history'+f'/I_{i}')
+        if not os.path.exists(out+'_I_history'+f'/I_{i}'):
+            os.makedirs(out+'_I_history'+f'/I_{i}')
             
         clf = Classif(clfs)
         clf.fit(x,y,x_test, y_test, dataset, f'I_{i}',out = out+'I_history', iters=ite) 
@@ -156,8 +156,8 @@ for i in range(len(dist_trunk)):
         y_os = tf.keras.utils.to_categorical(y_os, num_classes=None, dtype="float32")
         
         # ======= Classif on balanced data with synthetic data =======
-        if not os.path.exists(out+'B_history'+f'/B_{i}'):
-            os.makedirs(out+'B_history'+f'/B_{i}')
+        if not os.path.exists(out+'/B_history'+f'/B_{i}'):
+            os.makedirs(out+'/B_history'+f'/B_{i}')
         clf.fit(x_os, y_os, x_test, y_test, dataset, f'B_{i}', out=out+'B_history',iters = ite) 
         
         
