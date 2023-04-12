@@ -9,6 +9,7 @@ from tslearn.svm import TimeSeriesSVC
 
 import seaborn as sns
 from pyts.classification import TimeSeriesForest
+from pyts.classification import LearningShapelets
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.over_sampling import SMOTE
@@ -24,6 +25,7 @@ from sklearn.metrics import average_precision_score
 from sklearn.preprocessing import label_binarize
 from sklearn.neural_network import MLPClassifier
 from tslearn.neural_network import TimeSeriesMLPClassifier
+
 import tsaug
 import itertools
 
@@ -169,12 +171,14 @@ class Classif:
             self.clf = TimeSeriesForest(n_jobs = -1,max_features='sqrt')
         elif (clf == 'MLP'):
             self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(500,500,), verbose = True)
-            
+        elif (clf == 'LS'):
+            self.clf = LearningShapelets(verbose = True)
         elif (clf == 'LSTM'):
             self.clf = 'LSTM'
             
         elif (clf == 'MLP4'):
             self.clf = 'MLP4'
+        
 
         
     def __lstm__(self,MAX_SEQUENCE_LENGTH, NB_CLASS, NUM_CELLS=8):
@@ -265,7 +269,7 @@ class Classif:
                 hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
                 np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         else:
-            self.clf.fit(x_train, y_train)
+            self.clf.fit(x_train[:,:,0], np.argmax(y_train, axis = 1))
         
     
     def predict(self,x_test):
