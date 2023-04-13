@@ -404,7 +404,7 @@ class Classif:
         """
         if self.Trocket:
             x_test = apply_kernels(x_test, self.kernels)
-            y_pred = self.clf.predict(x_test)
+            y_pred = self.clf.predict(x_test[:,:,0])
         else:
                
             if (len(np.array(y_test).shape) > 1):
