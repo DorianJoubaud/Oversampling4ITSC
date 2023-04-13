@@ -410,13 +410,14 @@ class Classif:
             if (len(np.array(y_test).shape) > 1):
                 
                 y_pred = self.clf.predict(x_test[:,:,0])
-                y_pred = np.argmax(y_pred, axis=1)
+               
                 y_test = np.argmax(y_test , axis = 1)
             
             
                 y_pred = self.clf.predict(x_test)
                         
-       
+        if (len(np.array(y_pred).shape) > 1):
+             y_pred = np.argmax(y_pred, axis=1)
         
         if average:
             return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = 'macro'),geometric_mean_score(y_test, y_pred, average='macro')
