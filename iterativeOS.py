@@ -165,7 +165,7 @@ class Sampler:
 
 class Classif:
     def __init__(self, clf):
-        
+        self.Trocket = False
         if (clf == 'SVM'):
             
             self.clf = TimeSeriesSVC(kernel="gak", gamma=.1, n_jobs=-1)
