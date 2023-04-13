@@ -247,6 +247,7 @@ class Classif:
 
     def rocket(self, x_train):
         self.kernels = generate_kernels(len(x_train[0]), 10_000)
+        
         X_training_transform = apply_kernels(x_train, self.kernels)
         print(X_training_transform.shape)
         return X_training_transform
@@ -282,6 +283,7 @@ class Classif:
                 np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         elif self.clf == 'ROCKET':
             self.clf.fit(self.rocket(x_train), np.argmax(y_train, axis = 1))
+            print('ROCKET fitted')
         else:
             self.clf.fit(x_train[:,:,0], np.argmax(y_train, axis = 1))
         
