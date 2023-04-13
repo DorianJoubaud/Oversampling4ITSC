@@ -281,7 +281,7 @@ class Classif:
                 self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy',tfa.metrics.F1Score(num_classes=len(y_train[0]))])
                 hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
                 np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
-        elif self.clf == 'ROCKET':
+        elif self.Trocket:
             self.clf.fit(self.rocket(x_train), np.argmax(y_train, axis = 1))
             print('ROCKET fitted')
         else:
