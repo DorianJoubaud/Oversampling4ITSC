@@ -178,7 +178,6 @@ class Classif:
             self.clf = LearningShapelets(verbose = True)
         elif (clf == 'ROCKET'):
             self.clf = RidgeClassifierCV(alphas = np.logspace(-3, 3, 10))
-            self.Trocket = True
             
         elif (clf == 'LSTM'):
             self.clf = 'LSTM'
@@ -250,7 +249,7 @@ class Classif:
         
         X_training_transform = apply_kernels(x_train, self.kernels)
         print(X_training_transform.shape)
-        return X_training_transform
+        return X_training_transform, True
         
     
     def fit(self, x_train, y_train,x_test=None, y_test = None, name = None, add_name = None, out = None,iters = None):
@@ -282,7 +281,8 @@ class Classif:
                 hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
                 np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         elif self.Trocket:
-            self.clf.fit(self.rocket(x_train), np.argmax(y_train, axis = 1))
+            x_train, self.Trocket = self.rocket(x_train)
+            self.clf.fit(x_train, np.argmax(y_train, axis = 1))
             print('ROCKET fitted')
         else:
             self.clf.fit(x_train[:,:,0], np.argmax(y_train, axis = 1))
