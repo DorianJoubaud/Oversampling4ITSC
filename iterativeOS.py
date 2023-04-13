@@ -248,6 +248,7 @@ class Classif:
     def rocket(self, x_train):
         self.kernels = generate_kernels(len(x_train[0]), 10_000)
         X_training_transform = apply_kernels(x_train, self.kernels)
+        print(X_training_transform.shape)
         return X_training_transform
         
     
@@ -399,16 +400,20 @@ class Classif:
         Returns:
             list: all metric (accu, mcc, f1, g)
         """
-        if (len(np.array(y_test).shape) > 1):
-            
+        if self.Trocket:
+            x_test = apply_kernels(x_test, self.kernels)
             y_pred = self.clf.predict(x_test)
-            y_pred = np.argmax(y_pred, axis=1)
-            y_test = np.argmax(y_test , axis = 1)
         else:
-            if self.Trocket:
-                x_test = apply_kernels(x_test, self.kernels)
-            y_pred = self.clf.predict(x_test[:,:,0])
-                      
+               
+            if (len(np.array(y_test).shape) > 1):
+                
+                y_pred = self.clf.predict(x_test[:,:,0])
+                y_pred = np.argmax(y_pred, axis=1)
+                y_test = np.argmax(y_test , axis = 1)
+            
+            
+                y_pred = self.clf.predict(x_test)
+                        
        
         
         if average:
