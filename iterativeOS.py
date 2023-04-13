@@ -177,7 +177,7 @@ class Classif:
         elif (clf == 'LS'):
             self.clf = LearningShapelets(verbose = True)
         elif (clf == 'ROCKET'):
-            self.clf = RidgeClassifierCV(alphas = np.logspace(-3, 3, 10), normalize = True)
+            self.clf = RidgeClassifierCV(alphas = np.logspace(-3, 3, 10))
             self.Trocket = True
             
         elif (clf == 'LSTM'):
@@ -246,8 +246,8 @@ class Classif:
         return model
 
     def rocket(self, x_train):
-        kernels = generate_kernels(len(x_train[0]), 10_000)
-        X_training_transform = apply_kernels(x_train, kernels)
+        self.kernels = generate_kernels(len(x_train[0]), 10_000)
+        X_training_transform = apply_kernels(x_train, self.kernels)
         return X_training_transform
         
     
@@ -406,7 +406,7 @@ class Classif:
             y_test = np.argmax(y_test , axis = 1)
         else:
             if self.Trocket:
-                x_test = apply_kernels(x_test, kernels)
+                x_test = apply_kernels(x_test, self.kernels)
             y_pred = self.clf.predict(x_test[:,:,0])
                       
        
