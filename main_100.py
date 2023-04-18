@@ -53,8 +53,7 @@ y_train = class_offset(y_train, dataset)
 y_test = class_offset(y_test, dataset)
 
 # If <11 data per class percentage = 8
-if len(y_train) <11:
-    percentage = 8
+
     
 nb_timesteps = int(x_train.shape[1] / 1)
 input_shape = (nb_timesteps , 1)
@@ -63,6 +62,8 @@ x_test = x_test.reshape((-1, input_shape[0], input_shape[1]))
 x_train = x_train.reshape((-1, input_shape[0], input_shape[1]))
 
 _, dist = np.unique(y_train, return_counts = True)
+if dist[0] <11:
+    percentage = 8
 bal_str = {i:dist[i] for i in range(len(dist))}
 
 y_train = tf.keras.utils.to_categorical(y_train, num_classes=None, dtype="float32")
