@@ -90,7 +90,7 @@ for i in np.linspace(0,99,pourcentage):
     
     id_trunk.append(dist_id[idx][1])
     dist_trunk.append(dist_id[idx][0])
-print(dist_trunk)
+
 pd.DataFrame(list(zip(dist_trunk, id_trunk))).to_csv(out+'/'+'id.txt')
 
 
@@ -137,8 +137,8 @@ for i in range(len(dist_trunk)):
         # ====print(x.shape)=== Classif on imbalanced data =======
         
         
-        if not os.path.exists(out+'_I_history'+f'/I_{i}'):
-            os.makedirs(out+'_I_history'+f'/I_{i}')
+        if not os.path.exists(out+'/I_history'+f'/I_{i}'):
+            os.makedirs(out+'/I_history'+f'/I_{i}')
             
         clf = Classif(clfs)
         clf.fit(x,y,x_test, y_test, dataset, f'I_{i}',out = out+'I_history', iters=ite) 

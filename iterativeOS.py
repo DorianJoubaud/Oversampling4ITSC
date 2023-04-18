@@ -166,6 +166,7 @@ class Sampler:
 class Classif:
     def __init__(self, clf):
         self.Trocket = False
+        self.name = clf
         if (clf == 'SVM'):
             
             self.clf = TimeSeriesSVC(kernel="gak", gamma=.1, n_jobs=-1)
@@ -175,7 +176,7 @@ class Classif:
         elif (clf == 'MLP'):
             self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(500,500,), verbose = True)
         elif (clf == 'LS'):
-            self.clf = LearningShapelets(verbose = True)
+            self.clf = LearningShapelets(verbose = True, tol = 0.1)
         elif (clf == 'ROCKET'):
             self.clf = RidgeClassifierCV(alphas = np.logspace(-3, 3, 10))
             
@@ -245,10 +246,11 @@ class Classif:
         return model
 
     def rocket(self, x_train):
-        self.kernels = generate_kernels(len(x_train[0]), 10_000)
+        self.kernels = generate_kernels(len(x_train[0]), 10000)
         
-        X_training_transform = apply_kernels(x_train, self.kernels)
-        print(X_training_transform.shape)
+        
+        X_training_transform = apply_kernels(x_train[:,:,0], self.kernels)
+        
         return X_training_transform, True
         
     
@@ -257,7 +259,7 @@ class Classif:
         Fit the model on training data
         
         """
-        if self.clf == 'LSTM' or self.clf == 'MLP4':
+        if self.name == 'LSTM' or self.name == 'MLP4':
             
             if self.clf == 'LSTM':
                 self.clf = self.__lstm__(len(x_train[0]), len(y_train[0]))
@@ -280,7 +282,7 @@ class Classif:
                 self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy',tfa.metrics.F1Score(num_classes=len(y_train[0]))])
                 hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
                 np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
-        elif self.Trocket:
+        elif self.name == 'ROCKET':
             x_train, self.Trocket = self.rocket(x_train)
             self.clf.fit(x_train, np.argmax(y_train, axis = 1))
             print('ROCKET fitted')
@@ -402,22 +404,29 @@ class Classif:
         Returns:
             list: all metric (accu, mcc, f1, g)
         """
-        if self.Trocket:
-            x_test = apply_kernels(x_test, self.kernels)
-            y_pred = self.clf.predict(x_test[:,:,0])
+        if self.name == 'ROCKET':
+            x_test = apply_kernels(x_test[:,:,0], self.kernels)
+            y_pred = self.clf.predict(x_test)
+        elif self.name == 'LS' or self.name == 'SVM' or self.name == 'TSF':
+                
+            y_pred = self.clf.predict(x_test[:,:,0  ])
+            
         else:
                
-            if (len(np.array(y_test).shape) > 1):
+           
                 
-                y_pred = self.clf.predict(x_test[:,:,0])
+                y_pred = self.clf.predict(x_test)
                
-                y_test = np.argmax(y_test , axis = 1)
+                
             
             
                 y_pred = self.clf.predict(x_test)
+                
+                y_pred = np.argmax(y_pred, axis=1)
                         
-        if (len(np.array(y_pred).shape) > 1):
-             y_pred = np.argmax(y_pred, axis=1)
+        
+             
+        y_test = np.argmax(y_test , axis = 1)
         
         if average:
             return accuracy_score(y_test, y_pred), matthews_corrcoef(y_test, y_pred),f1_score(y_test, y_pred, average = 'macro'),geometric_mean_score(y_test, y_pred, average='macro')
