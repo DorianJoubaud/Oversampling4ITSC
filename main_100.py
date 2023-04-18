@@ -52,6 +52,10 @@ x_test = x_test[:,1:]
 y_train = class_offset(y_train, dataset)
 y_test = class_offset(y_test, dataset)
 
+# If <11 data per class percentage = 8
+if len(y_train) <11:
+    percentage = 8
+    
 nb_timesteps = int(x_train.shape[1] / 1)
 input_shape = (nb_timesteps , 1)
     
