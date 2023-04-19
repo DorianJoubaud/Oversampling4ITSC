@@ -246,10 +246,11 @@ class Classif:
         return model
 
     def rocket(self, x_train):
+        print(len(x_train[0]))
         self.kernels = generate_kernels(len(x_train[0]), 10000)
         
         
-        X_training_transform = apply_kernels(x_train[:,:,0], self.kernels)
+        X_training_transform = apply_kernels(np.array(x_train[:,:,0],float), self.kernels)
         
         return X_training_transform, True
         
@@ -405,7 +406,7 @@ class Classif:
             list: all metric (accu, mcc, f1, g)
         """
         if self.name == 'ROCKET':
-            x_test = apply_kernels(x_test[:,:,0], self.kernels)
+            x_test = apply_kernels(np.array(x_test[:,:,0], float), self.kernels)
             y_pred = self.clf.predict(x_test)
         elif self.name == 'LS' or self.name == 'SVM' or self.name == 'TSF':
                 
