@@ -63,7 +63,7 @@ x_train = x_train.reshape((-1, input_shape[0], input_shape[1]))
 
 _, dist = np.unique(y_train, return_counts = True)
 if dist[0] <11:
-    percentage = 8
+    pourcentage = 8
 bal_str = {i:dist[i] for i in range(len(dist))}
 
 y_train = tf.keras.utils.to_categorical(y_train, num_classes=None, dtype="float32")
