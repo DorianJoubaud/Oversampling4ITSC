@@ -6,6 +6,7 @@ from sklearn.manifold import TSNE
 
 from sklearn.decomposition import PCA
 from tslearn.svm import TimeSeriesSVC
+from sklearn.svm import SVC
 
 import seaborn as sns
 from pyts.classification import TimeSeriesForest
@@ -169,10 +170,11 @@ class Classif:
         self.name = clf
         if (clf == 'SVM'):
             
-            self.clf = TimeSeriesSVC(kernel="gak", gamma=.1, n_jobs=-1)
+            self.clf = SVC(kernel="rbf", gamma=.1)
         elif (clf == 'TSF'):
             
             self.clf = TimeSeriesForest(n_jobs = -1,max_features='sqrt')
+            
         elif (clf == 'MLP'):
             self.clf = TimeSeriesMLPClassifier(hidden_layer_sizes=(500,500,), verbose = True)
         elif (clf == 'LS'):
