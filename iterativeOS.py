@@ -269,22 +269,22 @@ class Classif:
             elif self.clf == 'MLP4':
                 self.clf = self.mlp4((len(x_train[0]),1), len(y_train[0]))
                 
-                model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.ckpt', verbose=0,
+            model_checkpoint = ModelCheckpoint(f'{out}/{add_name}/weights_{iters}.ckpt', verbose=0,
                                         monitor='loss', save_best_only=True, save_weights_only=True)
-                reduce_lr = ReduceLROnPlateau(monitor='loss', patience=150, mode='auto',
+            reduce_lr = ReduceLROnPlateau(monitor='loss', patience=150, mode='auto',
                                     factor=1. / np.cbrt(2), cooldown=0, min_lr=1e-4, verbose=2)
-                early_stop = EarlyStopping(monitor='val_loss', patience=300)
-                print('=== Compiled ===')
+            early_stop = EarlyStopping(monitor='val_loss', patience=300)
+            print('=== Compiled ===')
 
                 # wandb.login(key="89972c25af0c49a4e2e1b8663778daedd960634a")
                 # wandb.init(project="iterative_imbalance_classification_TS", entity="djbd")
                 # wandb.run.name = f'Classification {name}  - {add_name}'
 
-                callback_list = [model_checkpoint, reduce_lr, early_stop]#,WandbCallback()]
-                optm = Adam(lr=1e-3)
-                self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy',tfa.metrics.F1Score(num_classes=len(y_train[0]))])
-                hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
-                np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
+            callback_list = [model_checkpoint, reduce_lr, early_stop]#,WandbCallback()]
+            optm = Adam(lr=1e-3)
+            self.clf.compile(optimizer=optm, loss='categorical_crossentropy', metrics=['accuracy',tfa.metrics.F1Score(num_classes=len(y_train[0]))])
+            hist = self.clf.fit(x_train, y_train, batch_size=128, epochs=2000, callbacks=callback_list, verbose=2, validation_data=(x_test, y_test))
+            np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         elif self.name == 'ROCKET':
             x_train, self.Trocket = self.rocket(x_train)
             self.clf.fit(x_train, np.argmax(y_train, axis = 1))
