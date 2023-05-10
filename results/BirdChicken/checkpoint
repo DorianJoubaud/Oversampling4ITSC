@@ -1,2 +1,0 @@
-model_checkpoint_path: "LSTM_SMOTE__weights.ckpt"
-all_model_checkpoint_paths: "LSTM_SMOTE__weights.ckpt"
