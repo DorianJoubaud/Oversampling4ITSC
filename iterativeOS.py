@@ -94,8 +94,8 @@ class Sampler:
         Returns:
             _type_: _description_
         """
-        x = list(x_e.copy())
-        y = list(y_e.copy())
+        x = np.array(x_e.copy())
+        y = np.array(y_e.copy())
         
         _, y_dist = np.unique(y, return_counts=True)
         
@@ -170,7 +170,7 @@ class Classif:
         self.name = clf
         if (clf == 'SVM'):
             
-            self.clf = SVC(kernel="rbf", gamma=.1)
+            self.clf =  TimeSeriesSVC(kernel="gak", gamma=.01, n_jobs = -1)
         elif (clf == 'TSF'):
             
             self.clf = TimeSeriesForest(n_jobs = -1,max_features='sqrt')
@@ -248,7 +248,7 @@ class Classif:
         return model
 
     def rocket(self, x_train):
-        print(len(x_train[0]))
+        
         self.kernels = generate_kernels(len(x_train[0]), 10000)
         
         
@@ -287,8 +287,12 @@ class Classif:
             np.save(f'{out}/{add_name}/hist_{iters}.npy', hist.history)
         elif self.name == 'ROCKET':
             x_train, self.Trocket = self.rocket(x_train)
+            
             self.clf.fit(x_train, np.argmax(y_train, axis = 1))
             print('ROCKET fitted')
+            
+        elif self.name == 'SVM':
+            self.clf.fit(x_train,  np.argmax(y_train, axis = 1))
         else:
             self.clf.fit(x_train[:,:,0], np.argmax(y_train, axis = 1))
         
@@ -410,9 +414,10 @@ class Classif:
         if self.name == 'ROCKET':
             x_test = apply_kernels(np.array(x_test[:,:,0], float), self.kernels)
             y_pred = self.clf.predict(x_test)
-        elif self.name == 'LS' or self.name == 'SVM' or self.name == 'TSF':
+        elif self.name == 'LS'  or self.name == 'TSF':
                 
             y_pred = self.clf.predict(x_test[:,:,0  ])
+    
             
         else:
                
@@ -767,3 +772,25 @@ def getAlldistMulti(k,n_max,M_class, m_class):
 
 
 
+# Generate n ditributions up to balancing the dataset
+def balance(dist, n):
+    all_dist = list()
+    
+    # get majority classes
+    Ma = np.where(dist == np.max(dist))[0]
+    # get minority classes
+    mi = np.where(dist < np.max(dist))
+    
+    for i in range(n+1):
+        tmp = list()
+        for classe in range(len(dist)):
+            if classe in Ma:
+                tmp.append(dist[classe])
+            else:
+                if ((int(dist[classe]  + 1 + i * (dist[Ma[0]] - dist[classe]) / n)) < dist[Ma[0]] and i > 0):
+                    tmp.append(int(dist[classe]  + 1 + i * (dist[Ma[0]] - dist[classe]) / n))
+                else:
+                    tmp.append(int(dist[classe]  + i * (dist[Ma[0]] - dist[classe]) / n))
+                
+        all_dist.append(tmp)
+    return all_dist
