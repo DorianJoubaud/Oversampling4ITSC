@@ -12,6 +12,7 @@ clfs = sys.argv[2]
 tech = sys.argv[3]
 pourcentage = int(sys.argv[4])
 
+
 trig = False
 nb_iter = 5
 
@@ -42,8 +43,9 @@ x_test = x_test[:,1:]
 y_train = class_offset(y_train, dataset)
 y_test = class_offset(y_test, dataset)
 
-# If <11 data per class percentage = 8
-
+# If pourcentage < the total number to data, we set it to the total number of data - 1
+if (pourcentage<=len(y_train)):
+    pourcentage = len(y_train)-1
     
 nb_timesteps = int(x_train.shape[1] / 1)
 input_shape = (nb_timesteps , 1)
